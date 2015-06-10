@@ -127,6 +127,19 @@ config MSMCCI_HWMON
 config MSM_M4M_HWMON
 	tristate "MSM M4M cache monitor hardware"
 	depends on ARCH_MSM
+
+config ADRENO_IDLER
+	tristate "MSM Adreno idler"
+	depends on DEVFREQ_GOV_MSM_ADRENO_TZ
+	help
+	  Uses a different calculation method on top of Adreno TZ
+	  just for calculating frequency for idle to reduce the
+	  wasted power coming from stock Adreno TZ while
+	  maintaining high-performance.
+
+config DEVFREQ_GOV_MSM_CPUFREQ
+	bool "MSM CPUfreq"
+	depends on CPU_FREQ_MSM
 	help
 	  MSM M4M has counters that can be used to monitor requests coming to
 	  M4M. MSM M4M hardware monitor device programs corresponding registers
