@@ -178,9 +178,7 @@ static int sdcardfs_cmp_ci(const struct dentry *parent,
 	return 1;
 }
 
-static void sdcardfs_canonical_path(const struct path *path,
-				struct path *actual_path)
-{
+static void sdcardfs_canonical_path(const struct path *path, struct path *actual_path) {
 	sdcardfs_get_real_lower(path->dentry, actual_path);
 }
 
@@ -191,4 +189,3 @@ const struct dentry_operations sdcardfs_ci_dops = {
 	.d_compare	= sdcardfs_cmp_ci,
 	.d_canonical_path = sdcardfs_canonical_path,
 };
-
