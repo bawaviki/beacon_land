@@ -19,11 +19,6 @@ obj-$(CONFIG_IOSCHED_NOOP)	+= noop-iosched.o
 obj-$(CONFIG_IOSCHED_DEADLINE)	+= deadline-iosched.o
 obj-$(CONFIG_IOSCHED_CFQ)	+= cfq-iosched.o
 obj-$(CONFIG_IOSCHED_TEST)	+= test-iosched.o
-<<<<<<< HEAD
-=======
-obj-$(CONFIG_IOSCHED_SIO)       += sio-iosched.o
-obj-$(CONFIG_IOSCHED_FIOPS)	+= fiops-iosched.o
->>>>>>> 85dcbf3cb745... Added fiops IO scheduler
 
 obj-$(CONFIG_BLOCK_COMPAT)	+= compat_ioctl.o
 obj-$(CONFIG_BLK_CMDLINE_PARSER)	+= cmdline-parser.o
