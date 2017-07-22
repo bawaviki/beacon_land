@@ -9,6 +9,10 @@ env:
     - CCACHE_TEMPDIR=/tmp/.ccache-temp
     - CCACHE_COMPRESS=1
     - BASE_OUTDIR=$TRAVIS_BUILD_DIR/out
+deploy:
+  skip_cleanup: true
+git:
+  depth: 3
 addons:
   packages:
   - gcc-4.9
