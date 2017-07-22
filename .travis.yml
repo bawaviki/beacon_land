@@ -19,3 +19,9 @@ before_install:
  - git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/ -b marshmallow-dev
 script:
 - ./build.sh
+after_success:
+- eval "$(ssh-agent -s)" #start the ssh agent 
+- chmod 600 .travis/deploy_key.pem # this key should have push access
+- ssh-add .travis/deploy_key.pem
+- git remote add deploy https://github.com/nichcream/Xiaomi_Kernel_OpenSource.git
+- git push deploy
