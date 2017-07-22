@@ -1,0 +1,21 @@
+os: linux
+language: c
+compiler: 
+env:
+  global:
+    - MAKEJOBS=-j4
+    - RUN_TESTS=false
+    - CCACHE_SIZE=100M
+    - CCACHE_TEMPDIR=/tmp/.ccache-temp
+    - CCACHE_COMPRESS=1
+    - BASE_OUTDIR=$TRAVIS_BUILD_DIR/out
+addons:
+  packages:
+  - gcc-4.9
+before_install:
+ - chmod +x build.sh
+ - sudo apt-get install gcc-4.9
+ - sudo ln -s /bin/gcc-4.9 /bin/gcc
+ - git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/ -b marshmallow-dev
+script:
+- ./build.sh
