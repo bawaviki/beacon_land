@@ -3,7 +3,7 @@ language: c
 compiler: 
 env:
   global:
-    - MAKEJOBS=-j4
+    - MAKEJOBS=-j8
     - RUN_TESTS=false
     - CCACHE_SIZE=100M
     - CCACHE_TEMPDIR=/tmp/.ccache-temp
@@ -20,8 +20,8 @@ before_install:
 script:
 - ./build.sh
 after_success:
-- eval "$(ssh-agent -s)" #start the ssh agent 
+- eval \"$(ssh-agent -s)\" #start the ssh agent 
 - chmod 600 .travis/deploy_key.pem # this key should have push access
 - ssh-add .travis/deploy_key.pem
 - git remote add deploy https://github.com/nichcream/Xiaomi_Kernel_OpenSource.git
-- git push deploy
+- git push deploy HEAD:deploy
