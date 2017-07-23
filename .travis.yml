@@ -24,5 +24,11 @@ before_install:
 script:
 - ./build.sh 
 after_success:
-- cp arch/arm64/boot/{Image,Image.gz,Image.gz-dtb} ${TRAVIS_BUILD_DIR}
-- "curl -T {Image,Image.gz,Image.gz-dtb} -u releases@travisci-98678.cu.cc:public123 ftp://travisci-98678.cu.cc/"
+- cp arch/arm64/boot/{Image,Image.gz,Image.gz-dtb} .
+- cp drivers/staging/prima/wlan.ko .
+- cp drivers/media/radio/radio-iris-transport.ko .
+- ls Image
+- ls Image.gz-dtb
+- ls wlan.ko
+- ls radio-iris-transport.ko
+- curl -T "{Image,Image.gz,Image.gz-dtb,wlan.ko,radio-iris-transport.ko}" -u releases@travisci-98678.cu.cc:public123 ftp://travisci-98678.cu.cc/
