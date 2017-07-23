@@ -22,10 +22,16 @@ before_install:
  - sudo ln -s /bin/gcc-4.9 /bin/gcc
  - git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/ -b marshmallow-dev
 script:
-- ./build.sh
+- ./build.sh 
 after_success:
-- eval "$(ssh-agent -s)" #start the ssh agent 
-- chmod 600 .travis/deploy_key.pem # this key should have push access
-- ssh-add .travis/deploy_key.pem
-- git remote add deploy https://github.com/nichcream/Xiaomi_Kernel_OpenSource.git
-- git push deploy HEAD:deploy
+- cp arch/arm64/boot/{Image,Image.gz,Image.gz-dtb} ${TRAVIS_BUILD_DIR}
+deploy:
+  provider: releases
+  api_key: "21b8e4314211e5eac1e5b5385b95b965974e6c33"
+  file:
+  - Image
+  - Image.gz
+  - Image.gz-dtb
+  skip_cleanup: true
+  on:
+      tags: true
