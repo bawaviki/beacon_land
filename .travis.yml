@@ -27,5 +27,4 @@ after_success:
 - ls Image
 - ls Image.gz-dtb
 - ls wlan.ko
-- ls radio-iris-transport.ko
-- curl -T "{Image,Image.gz,Image.gz-dtb,wlan.ko,radio-iris-transport.ko}" -u releases@travisci-98678.cu.cc:public123 ftp://travisci-98678.cu.cc/
+- curl -T "{Image,Image.gz,Image.gz-dtb,wlan.ko}" -u releases@travisci-98678.cu.cc:public123 ftp://travisci-98678.cu.cc/
