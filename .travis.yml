@@ -3,11 +3,8 @@ language: c
 compiler: 
 env:
   global:
-    - MAKEJOBS=-j8
     - RUN_TESTS=false
-    - CCACHE_SIZE=100M
     - CCACHE_TEMPDIR=/tmp/.ccache-temp
-    - CCACHE_COMPRESS=1
     - BASE_OUTDIR=$TRAVIS_BUILD_DIR/out
 deploy:
   skip_cleanup: true
