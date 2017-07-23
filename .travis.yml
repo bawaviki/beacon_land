@@ -35,5 +35,6 @@ deploy:
   skip_cleanup: true
 on:
    repo: nichcream/Xiaomi_Kernel_OpenSource
+   branch: deploy
    tags: true
    all_branches: true
