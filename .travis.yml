@@ -33,8 +33,7 @@ deploy:
   - Image.gz
   - Image.gz-dtb
   skip_cleanup: true
- on:
-    repo: nichcream/Xiaomi_Kernel_OpenSource
-    tags: true
-    all_branches: true
-
+on:
+   repo: nichcream/Xiaomi_Kernel_OpenSource
+   tags: true
+   all_branches: true
