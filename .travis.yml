@@ -20,7 +20,7 @@ before_install:
  - chmod +x build.sh
  - sudo apt-get install gcc-4.9
  - sudo ln -s /bin/gcc-4.9 /bin/gcc
- - git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/ -b marshmallow-dev
+ - git clone --depth=2 https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/ -b marshmallow-dev
 script:
 - ./build.sh 
 after_success:
