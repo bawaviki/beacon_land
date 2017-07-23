@@ -23,7 +23,7 @@ script:
 after_success:
 - cp arch/arm64/boot/{Image,Image.gz,Image.gz-dtb} .
 - cp drivers/staging/prima/wlan.ko .
-- cp drivers/media/radio/radio-iris-transport.ko .
+- aarch64-linux-android-strip –g wlan.ko
 - ls Image
 - ls Image.gz-dtb
 - ls wlan.ko
