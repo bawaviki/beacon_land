@@ -25,7 +25,7 @@ after_success:
 - cp drivers/staging/prima/wlan.ko .
 - LOCAL_DIR=`pwd`
 - export PATH=$PATH:$LOCAL_DIR/aarch64-linux-android-4.9/bin
-- aarch64-linux-android-strip –g wlan.ko
+- aarch64-linux-android-strip -g wlan.ko
 - ls Image
 - ls Image.gz-dtb
 - ls wlan.ko
