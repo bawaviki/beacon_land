@@ -23,7 +23,7 @@ script:
 after_success:
 - cp arch/arm64/boot/{Image,Image.gz,Image.gz-dtb} .
 - cp drivers/staging/prima/wlan.ko .
-- $PATH:$LOCAL_DIR/aarch64-linux-android-4.9/bin/aarch64-linux-android-strip –g wlan.ko
+- $LOCAL_DIR/aarch64-linux-android-4.9/bin/aarch64-linux-android-strip –g wlan.ko
 - ls Image
 - ls Image.gz-dtb
 - ls wlan.ko
