@@ -12,10 +12,10 @@ git:
   depth: 3
 addons:
   packages:
-  - gcc-6
+  - gcc
 before_install:
  - chmod +x build.sh
- - sudo apt-get install gcc-6
+ - sudo apt-get install gcc
  - sudo ln -s /bin/gcc-6 /bin/gcc
  - git clone --depth=2 https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/ -b marshmallow-dev
 script:
