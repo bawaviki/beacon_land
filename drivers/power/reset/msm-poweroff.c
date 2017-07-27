@@ -312,8 +312,8 @@ static void msm_restart_prepare(const char *cmd)
 			((cmd != NULL && cmd[0] != '\0') &&
  			strcmp(cmd, "recovery") &&
  			strcmp(cmd, "bootloader") &&
- 			strcmp(cmd, "rtc")))
-			!strcmp(cmd, "edl"))) &&
+ 			strcmp(cmd, "rtc"))) &&
+			strcmp(cmd, "edl")))
 			need_warm_reset = true;
 	}
 
