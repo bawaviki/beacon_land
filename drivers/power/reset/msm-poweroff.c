@@ -60,7 +60,7 @@ static void scm_disable_sdi(void);
  * There is no API from TZ to re-enable the registers.
  * So the SDI cannot be re-enabled when it already by-passed.
 */
-#ifdef WT_DLOAD_MODE_SUPPORT
+#if defined(WT_DLOAD_MODE_SUPPORT) || defined(CONFIG_MSM_PRESERVE_MEM)
 static int download_mode = 1;
 #else
 static int download_mode;
@@ -91,12 +91,6 @@ struct reset_attribute {
 #define RESET_ATTR(_name, _mode, _show, _store)	\
 	static struct reset_attribute reset_attr_##_name = \
 			__ATTR(_name, _mode, _show, _store)
-
-#if defined(WT_DLOAD_MODE_SUPPORT) || defined(CONFIG_MSM_PRESERVE_MEM)
-static int download_mode = 1;
-#else
-static int download_mode;
-#endif
 
 module_param_call(download_mode, dload_set, param_get_int,
 			&download_mode, 0644);
