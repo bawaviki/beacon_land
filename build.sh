@@ -15,5 +15,5 @@ export USE_CCACHE=1
 export CCOMPILE=$CROSS_COMPILE
 export CROSS_COMPILE=aarch64-linux-android-
 export USE_HOST_LEX=yes
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-android- stock_land_defconfig
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-android- land_defconfig
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-android- -j8
