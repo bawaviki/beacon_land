@@ -60,7 +60,7 @@ static void scm_disable_sdi(void);
  * There is no API from TZ to re-enable the registers.
  * So the SDI cannot be re-enabled when it already by-passed.
 */
-#if defined(WT_DLOAD_MODE_SUPPORT) || defined(CONFIG_MSM_PRESERVE_MEM)
+#ifdef WT_DLOAD_MODE_SUPPORT
 static int download_mode = 1;
 #else
 static int download_mode;
@@ -293,23 +293,20 @@ static void msm_restart_prepare(const char *cmd)
 			(in_panic || restart_mode == RESTART_DLOAD));
 #endif
 
-#ifdef CONFIG_MSM_PRESERVE_MEM
-	need_warm_reset = true;
-#else
-	need_warm_reset = (get_dload_mode() ||
-				(cmd != NULL && cmd[0] != '\0'));
-#endif
-
 	if (qpnp_pon_check_hard_reset_stored()) {
 		/* Set warm reset as true when device is in dload mode */
 		if (get_dload_mode() ||
 			((cmd != NULL && cmd[0] != '\0') &&
- 			strcmp(cmd, "recovery") &&
- 			strcmp(cmd, "bootloader") &&
- 			strcmp(cmd, "rtc") &&
-			strcmp(cmd, "edl")))
+			!strcmp(cmd, "edl")))
 			need_warm_reset = true;
+	} else {
+		need_warm_reset = (get_dload_mode() ||
+				(cmd != NULL && cmd[0] != '\0'));
 	}
+
+#ifdef CONFIG_MSM_PRESERVE_MEM
+	need_warm_reset = true;
+#endif
 
 	/* Hard reset the PMIC unless memory contents must be maintained. */
 	if (need_warm_reset) {
@@ -342,6 +339,8 @@ static void msm_restart_prepare(const char *cmd)
 		} else if (!strcmp(cmd, "keys clear")) {
 			qpnp_pon_set_restart_reason(
 				PON_RESTART_REASON_KEYS_CLEAR);
+			__raw_writel(0x7766550a, restart_reason);
+		} else if (!strncmp(cmd, "fastmmi", 7)) {
 			__raw_writel(0x77665505, restart_reason);
 		} else if (!strncmp(cmd, "oem-", 4)) {
 			unsigned long code;
