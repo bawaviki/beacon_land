@@ -32,10 +32,8 @@
 #include <linux/proc_fs.h>
 #include <linux/fs.h>
 #include <asm/uaccess.h>
-
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-#include <linux/input/prevent_sleep.h>
-bool dit_suspend = false;
+#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
+#include <linux/input/doubletap2wake.h>
 #endif
 
 #if CTP_CHARGER_DETECT
@@ -402,6 +400,10 @@ static irqreturn_t ft5x06_ts_interrupt(int irq, void *dev_id)
 			break;
 
 		if (y == 2000) {
+ 
+			#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
+			if(dt2w_switch && dt2w_scr_suspended) return IRQ_HANDLED;
+			#endif
 
 			y = 1344;
 
@@ -451,8 +453,9 @@ static int ft5x06_power_on(struct ft5x06_ts_data *data, bool on)
 {
 	int rc;
 
-	if (!on)
+	if (!on) {
 		goto power_off;
+	}
 
 	rc = regulator_enable(data->vdd);
 	if (rc) {
@@ -587,84 +590,59 @@ static int ft5x06_ts_pinctrl_select(struct ft5x06_ts_data *ft5x06_data, bool on)
 static int ft5x06_ts_suspend(struct device *dev)
 {
 	struct ft5x06_ts_data *data = dev_get_drvdata(dev);
-	char txbuf[2], i;
 	int err;
-
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-	bool prevent_sleep = false;
-#endif
-
-	if (data->loading_fw) {
-		dev_info(dev, "Firmware loading in process...\n");
-		return 0;
-	}
-
-	if (data->suspended) {
-		dev_info(dev, "Already in suspend state\n");
-		return 0;
-	}
-
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
- 	ts_get_prevent_sleep(prevent_sleep);
- 	DT2W_PRINFO("%s: Prevent Sleep is computed as '%s'\n",
- 			__func__, (prevent_sleep) ? "yes" : "no");
- 	if (!prevent_sleep) {
- 		DT2W_PRINFO("%s: IRQ now disable_irq()\n", __func__);
- 		disable_irq(data->client->irq);
- 		dit_suspend = false;
- 	} else {
- 		DT2W_PRINFO("%s: IRQ now enable_irq_wake()\n", __func__);
- 		enable_irq_wake(data->client->irq);
- 		dit_suspend = true;
- 	}
-#else
-	disable_irq(data->client->irq);
-#endif /* CONFIG_TOUCHSCREEN_PREVENT_SLEEP */
-
-	/* release all touches */
-	for (i = 0; i < data->pdata->num_max_touches; i++) {
-		input_mt_slot(data->input_dev, i);
-		input_mt_report_slot_state(data->input_dev, MT_TOOL_FINGER, 0);
-	}
-	input_mt_report_pointer_emulation(data->input_dev, false);
-	input_sync(data->input_dev);
-
-	if (gpio_is_valid(data->pdata->reset_gpio)) {
-		txbuf[0] = FT_REG_PMODE;
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-		txbuf[1] = (!prevent_sleep) ? FT_PMODE_HIBERNATE :
-			FT_PMODE_MONITOR;
-#else
-		txbuf[1] = FT_PMODE_HIBERNATE;
-#endif
-		err = ft5x06_i2c_write(data->client, txbuf, sizeof(txbuf));
-		msleep(data->pdata->hard_rst_dly);
-	}
-
-	if (data->pdata->power_on) {
-		err = data->pdata->power_on(false);
-		if (err) {
-			dev_err(dev, "power off failed");
-			goto pwr_off_fail;
+	
+	#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
+	if(!dt2w_switch || in_phone_call){
+	#endif
+		char txbuf[2], i;
+		
+		if (data->loading_fw) {
+			dev_info(dev, "Firmware loading in process...\n");
+			return 0;
 		}
-	} else {
-		err = ft5x06_power_on(data, false);
-		if (err) {
-			dev_err(dev, "power off failed");
-			goto pwr_off_fail;
+
+		if (data->suspended) {
+			dev_info(dev, "Already in suspend state\n");
+			return 0;
 		}
-	}
 
-	data->suspended = true;
+		disable_irq(data->client->irq);
 
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-	if (prevent_sleep) {
- 		/* disable the key panel touches */
- 		__clear_bit(EV_KEY, data->input_dev->evbit);
- 		input_sync(data->input_dev);
+		/* release all touches */
+		for (i = 0; i < data->pdata->num_max_touches; i++) {
+			input_mt_slot(data->input_dev, i);
+			input_mt_report_slot_state(data->input_dev, MT_TOOL_FINGER, 0);
+		}
+		input_mt_report_pointer_emulation(data->input_dev, false);
+		input_sync(data->input_dev);
+
+		if (gpio_is_valid(data->pdata->reset_gpio)) {
+			txbuf[0] = FT_REG_PMODE;
+			txbuf[1] = FT_PMODE_HIBERNATE;
+			err = ft5x06_i2c_write(data->client, txbuf, sizeof(txbuf));
+			msleep(data->pdata->hard_rst_dly);
+		}
+
+		if (data->pdata->power_on) {
+			err = data->pdata->power_on(false);
+			if (err) {
+				dev_err(dev, "power off failed");
+				goto pwr_off_fail;
+			}
+		} else {
+			err = ft5x06_power_on(data, false);
+			if (err) {
+				dev_err(dev, "power off failed");
+				goto pwr_off_fail;
+			}
+		}
+
+		data->suspended = true;
+	#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
 	}
-	data->prevent_sleep = prevent_sleep;
-#endif
+	#endif
+	
 
 	return 0;
 
@@ -679,131 +657,61 @@ pwr_off_fail:
 
 }
 
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
- static int dt2w_toggle_rebalance_irq(struct device *dev)
- {
-	struct ft5x06_ts_data *data = dev_get_drvdata(dev);
- 
- 	/* 
- 	 * Prema Chand Alugu (premaca@gmail.com)
- 	 *
- 	 * This function must be called only when we know that prevent_sleep state
- 	 * has been changed while the screen off.
- 	 */
- 	if (data->prevent_sleep) {
- 		// we have been with wake irqs so far [enable_irq_wake()]
- 		disable_irq_wake(data->client->irq);
- 		disable_irq(data->client->irq);
- 		DT2W_PRINFO("%s: IRQ now disable_irq_wake()\n", __func__);
-		DT2W_PRINFO("%s: IRQ now disable_irq()\n", __func__);
-		DT2W_PRINFO("%s: Rebalanced IRQ while dt2w OFF "
-				"during screen-off\n", __func__);
-	} else {
-		// we have been with irqs so far [disable_irq()]
-		enable_irq(data->client->irq);
-		enable_irq_wake(data->client->irq);
-		DT2W_PRINFO("%s: IRQ now enable_irq()\n", __func__);
-		DT2W_PRINFO("%s: IRQ now enable_irq_wake()\n", __func__);
-		DT2W_PRINFO("%s: Rebalanced IRQ while dt2w ON "
-				"during screen-off\n", __func__);
-	}
-
-	return 0;
- }
-#endif
-
 static int ft5x06_ts_resume(struct device *dev)
 {
 	struct ft5x06_ts_data *data = dev_get_drvdata(dev);
-	int err;
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-	bool prevent_sleep = false;
-#endif
+	
+		int err;
 
-	if (!data->suspended) {
-		dev_dbg(dev, "Already in awake state\n");
-		return 0;
-	}
-
-	if (data->pdata->power_on) {
-		err = data->pdata->power_on(true);
-		if (err) {
-			dev_err(dev, "power on failed");
-			return err;
+		if (!data->suspended) {
+			dev_dbg(dev, "Already in awake state\n");
+			return 0;
 		}
-	} else {
-		err = ft5x06_power_on(data, true);
-		if (err) {
-			dev_err(dev, "power on failed");
-			return err;
-		}
-	}
 
-	if (gpio_is_valid(data->pdata->reset_gpio)) {
-		gpio_set_value_cansleep(data->pdata->reset_gpio, 0);
-		msleep(data->pdata->hard_rst_dly);
-		gpio_set_value_cansleep(data->pdata->reset_gpio, 1);
-	}
-
-	msleep(data->pdata->soft_rst_dly);
-
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-	ts_get_prevent_sleep(prevent_sleep);
-	if (prevent_sleep != data->prevent_sleep) {
-		/* 
-		 * Prema Chand Alugu (premaca@gmail.com)
-		 *
-		 * simply the rebalance requirement; the prevent_sleep state is
-		 * stored in the dev structure, if there is any change while
-		 * the screen was off, we definitely need to rebalance
-		 * the state could be changed by the following known events
-		 * 1. toggled has been modified while screen was off
-		 * 2. in_phone_call state changed while screen was off
-		 */
-	    dt2w_toggle_rebalance_irq(dev);
-	}
-	DT2W_PRINFO("%s: Prevent Sleep is computed as '%s'\n",
-			__func__, (prevent_sleep) ? "yes" : "no");
-	/* enable the key panel touches back again */
- 	__set_bit(EV_KEY, data->input_dev->evbit);
-	input_sync(data->input_dev);
-
-	if (prevent_sleep) {
- 		DT2W_PRINFO("%s: IRQ now disable_irq_wake()\n", __func__);
-		disable_irq_wake(data->client->irq);
-	} else {
-		DT2W_PRINFO("%s: IRQ now enable_irq()\n", __func__);
-		enable_irq(data->client->irq);
-	}
-#else
-
-	enable_irq(data->client->irq);
-#endif /* CONFIG_TOUCHSCREEN_PREVENT_SLEEP */
-
-#if CTP_CHARGER_DETECT
-	batt_psy = power_supply_get_by_name("usb");
-	if (!batt_psy)
-		CTP_ERROR("tp resume battery supply not found\n");
-	else {
-		is_charger_plug =
-		    (u8) power_supply_get_battery_charge_state(batt_psy);
-
-		CTP_DEBUG("is_charger_plug %d, prev %d", is_charger_plug,
-			  pre_charger_status);
-		if (is_charger_plug) {
-			ft5x0x_write_reg(update_client, 0x8B, 1);
+		if (data->pdata->power_on) {
+			err = data->pdata->power_on(true);
+			if (err) {
+				dev_err(dev, "power on failed");
+				return err;
+			}
 		} else {
-			ft5x0x_write_reg(update_client, 0x8B, 0);
+			err = ft5x06_power_on(data, true);
+			if (err) {
+				dev_err(dev, "power on failed");
+				return err;
+			}
 		}
-	}
-	pre_charger_status = is_charger_plug;
-#endif
 
-	data->suspended = false;
+		if (gpio_is_valid(data->pdata->reset_gpio)) {
+			gpio_set_value_cansleep(data->pdata->reset_gpio, 0);
+			msleep(data->pdata->hard_rst_dly);
+			gpio_set_value_cansleep(data->pdata->reset_gpio, 1);
+		}
 
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-	data->prevent_sleep = prevent_sleep;
-#endif
+		msleep(data->pdata->soft_rst_dly);
+
+		enable_irq(data->client->irq);
+
+		#if CTP_CHARGER_DETECT
+		batt_psy = power_supply_get_by_name("usb");
+		if (!batt_psy)
+			CTP_ERROR("tp resume battery supply not found\n");
+		else {
+			is_charger_plug =
+				(u8) power_supply_get_battery_charge_state(batt_psy);
+
+			CTP_DEBUG("is_charger_plug %d, prev %d", is_charger_plug,
+				  pre_charger_status);
+			if (is_charger_plug) {
+				ft5x0x_write_reg(update_client, 0x8B, 1);
+			} else {
+				ft5x0x_write_reg(update_client, 0x8B, 0);
+			}
+		}
+		pre_charger_status = is_charger_plug;
+		#endif
+
+		data->suspended = false;
 
 	return 0;
 }
@@ -848,11 +756,18 @@ static int fb_notifier_callback(struct notifier_block *self,
 	if (evdata && evdata->data && event == FB_EVENT_BLANK &&
 	    ft5x06_data && ft5x06_data->client) {
 		blank = evdata->data;
-		if (*blank == FB_BLANK_UNBLANK)
+		if (*blank == FB_BLANK_UNBLANK) {
 			schedule_work(&ft5x06_data->fb_notify_work);
+			#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
+			dt2w_scr_suspended = false;
+			#endif
+		}
 		else if (*blank == FB_BLANK_POWERDOWN) {
 			flush_work(&ft5x06_data->fb_notify_work);
 			ft5x06_ts_suspend(&ft5x06_data->client->dev);
+			#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
+			dt2w_scr_suspended = true;
+			#endif
 		}
 	}
 
@@ -2697,12 +2612,7 @@ static int ft5x06_ts_probe(struct i2c_client *client,
 
 	err = request_threaded_irq(client->irq, NULL,
 				   ft5x06_ts_interrupt,
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-							   pdata->irq_gpio_flags | IRQF_ONESHOT
-							   | IRQF_NO_SUSPEND,
-#else
 				   pdata->irq_gpio_flags | IRQF_ONESHOT,
-#endif
 				   client->dev.driver->name, data);
 	if (err) {
 		dev_err(&client->dev, "request irq failed\n");
