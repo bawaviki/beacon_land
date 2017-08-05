@@ -23,7 +23,7 @@
 *.symtypes
 *.order
 *.elf
-*.bin
+#*.bin
 *.gz
 *.bz2
 *.lzma
