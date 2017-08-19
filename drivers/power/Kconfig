@@ -605,6 +605,13 @@ config MSM_BCL_PERIPHERAL_CTL
 	  provides routines to configure and monitor the BCL
 	  PMIC peripheral.
 
+config FORCE_FAST_CHARGE
+	bool "Increase input current limit when charging via USB"
+	default y
+	help
+	  A simple sysfs interface to increase input current limit
+	  when charging via USB.
+
 source "drivers/power/reset/Kconfig"
 
 endif # POWER_SUPPLY
