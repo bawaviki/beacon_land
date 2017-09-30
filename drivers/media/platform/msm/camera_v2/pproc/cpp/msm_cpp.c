@@ -28,6 +28,7 @@
 #include <linux/kernel.h>
 #include <linux/workqueue.h>
 #include <linux/clk/msm-clk.h>
+#include <media/msm_isp.h>
 #include <media/v4l2-event.h>
 #include <media/v4l2-ioctl.h>
 #include <media/msmb_camera.h>
