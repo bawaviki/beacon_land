@@ -289,11 +289,11 @@ struct ft5x06_ts_data {
 	struct pinctrl *ts_pinctrl;
 	struct pinctrl_state *gpio_state_active;
 	struct pinctrl_state *gpio_state_suspend;
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-	bool prevent_sleep;
-#endif
 };
 
+#if (defined(CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE) || defined(CONFIG_TOUCHSCREEN_SWEEP2WAKE))
+extern bool gesture_incall;
+#endif
 
 #define CTP_IC_TYPE_0 0x12
 #define CTP_IC_TYPE_1 0x14
